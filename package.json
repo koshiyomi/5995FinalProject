@@ -1,0 +1,11 @@
+{
+  "name": "untitled",
+  "version": "1.0.0",
+  "dependencies": {
+    "babel-core": "^6.26.3",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "mongodb": "latest",
+    "mongoose": "^5.5.5"
+  }
+}
