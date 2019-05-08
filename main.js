@@ -1,36 +1,34 @@
-let mongoose = require('mongoose') // 引入 mongoose
-let url = "mongodb://localhost:27017/mytest"; // 本地数据库地址
-mongoose.connect(url, {useNewUrlParser: true})
+/**
+ * @author Jianwei Hu, Simeng Qu
+ */
 
-// connect() 返回一个状态待定（pending）的连接，可以用来判断连接成功或失败
-let db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
-    console.log("Successful connection to "+url)
+// TODO: json file for database query
+var queryInfo;
+// TODO: json file for containing result geodata
+var geoData = [{lat: 34.0707, lng: -118.2795},{lat: 34.0737, lng: -118.2795},{lat: 34.0757, lng: -118.2795}];
+
+
+
+/***************************
+    express framework part
+ ****************************/
+let express = require('express');
+let app = express();
+
+let server = app.listen(8081, function () {
+    let port = server.address().port;
+    console.log("To access the web, click http://localhost:%s/index.html", port)
+
 });
 
+app.get('/index.html', function (req, res) {
+    res.sendFile( __dirname + "/" + "index.html" );
+});
 
+app.get("/query",function (request, response) {
+    queryInfo = request.query;
 
+    //TODO: perform query and renew geodata
 
-let express = require('express')()
-
-express.get('/',function (request, response) {
-    response.send("hello world!")
-})
-
-
-express.listen(3000)
-
-express.set('views', './views'); // 添加视图路径
-express.engine('html', require('ejs').renderFile); // 将EJS模板映射至".html"文件
-express.set('view engine', 'html'); // 设置视图引擎
-
-/*
- express.js: 配置引擎
-*/
-express.get('/view', function (request, response) {
-    response.render('index')
-})
-
-
-// API Key: AIzaSyCSmjAzovVzgyFgD5CkIwOVi3UOKe7L9iA
+    response.send(geoData)
+});
