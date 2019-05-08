@@ -45,10 +45,29 @@ app.get('/index.html', function (req, res) {
     res.sendFile( __dirname + "/" + "index.html" );
 });
 
+
 app.get("/query",function (request, response) {
     queryInfo = request.query;
 
-    //TODO: perform query and renew geodata
+    var query = {'Area ID': 2};
+    var results = [];
+    collection.find(query).project( {Location:1, _id: 0} ).toArray(function(err, res) {
+        // res.json(res)
+        for (let i = 0; i < res.length; i++){
+            var tmp = res[i].Location.split(", ");
+            var lat = Number(tmp[0].substr(1));
+            var lng = Number(tmp[1].slice(0,-1));
+            results[i] = {};
+            results[i].lat = lat;
+            results[i].lng = lng;
+
+        }
+        response.send(results)
+    });
+});
+
+app.get("/requestGraph",function (request, response) {
+    queryInfo = request.query;
 
     var query = {'Area ID': 2};
 
