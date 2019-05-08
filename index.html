@@ -29,14 +29,20 @@
                     <th>
                         Adding filter:
                     </th>
-                    <td>
+                    <th>
+                        <label>Area Name</label>
                         <input type="text" name="myinput">
-                    </td>
-                    <td>
+                    </th>
+                    <th>
+                        <label>Victim Sex</label>
                         <input type="radio" name="gender" value="male" checked> Male<br>
                         <input type="radio" name="gender" value="female"> Female<br>
                         <input type="radio" name="gender" value="other"> Other
-                    </td>
+                    </th>
+                    <th>
+                        <label>Time Occurred</label>
+                        <input type="time" name="time" min="00:00" max="23:59" required>
+                    </th>
                     <td>
                         <input type="submit" value="Update">
                     </td>
@@ -70,13 +76,14 @@
 <script>
     function update() {
         let queryForm = $("#queryForm").serializeArray();
+        console.log(queryForm);
         $.ajax({
             type: "GET",
             url: "query",
             data : queryForm,
             success: function(data)
             {
-                updateHeatmap(data)
+                // updateHeatmap(data)
                 console.log(data)
             },
             dataType: "json",
@@ -88,8 +95,16 @@
     function updateHeatmap(data){
         pointArray.clear();
         for (let i = 0; i < data.length; i++) {
-            pointArray.push(new google.maps.LatLng(data[i].lat, data[i].lng))
+            if(data[i].lat == 0 || data[i].lng == 0) {
+                console.log('Incorrect lat/lng');
+            }
+            else {
+                var curLat = Number(data[i].lat);
+                var curLng = Number(data[i].lng);
+                pointArray.push(new google.maps.LatLng(curLat, curLng))
+            }
         }
+        console.log(pointArray)
     }
 
 
@@ -128,3 +143,4 @@
         chart.draw(data, options);
     }
 </script>
+

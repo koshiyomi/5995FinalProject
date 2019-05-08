@@ -51,7 +51,7 @@ app.get("/query",function (request, response) {
 
     var query = {'Area ID': 2};
     var results = [];
-    collection.find(query).project( {Location:1, _id: 0} ).toArray(function(err, res) {
+    collection.find({}).limit(300000).project( {Location:1, _id: 0} ).toArray(function(err, res) {
         // res.json(res)
         for (let i = 0; i < res.length; i++){
             var tmp = res[i].Location.split(", ");
