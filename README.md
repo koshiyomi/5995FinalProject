@@ -1,2 +1,2 @@
 # 5995FinalProject
-# By Jianwei Hu and Simeng Qu
+By Jianwei Hu and Simeng Qu
