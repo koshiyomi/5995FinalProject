@@ -17,20 +17,50 @@ MongoClient.connect(url, { useNewUrlParser: true },(err, client) => {
     console.log("Connection established successfully");
 
     //...
-    db = client.db("mydb");
-    collection = db.collection("CrimeRecord");
+    db = client.db("project");
+    collection = db.collection("crimedata");
+
+    // create index and some fields - uncomment this part after running 
+    collection.createIndex( { "Area Name": "text" } );
+
+    collection.find({}, {Location:1, _id: 0}).forEach( function (x) {
+        var c = x.Location.split(", ");
+        var lat = Number(c[0].substr(1));
+        var lng = Number(c[1].slice(0, -1));
+        var id = x._id;
+        var year = Number(x['Date Occurred'].substr(6));
+        var areaLower = x['Area Name'].toLowerCase();
+
+        collection.updateMany(
+            {_id: id},
+            { $set: {
+                    lat: lat,
+                    lng: lng} }
+        );
+
+        collection.updateMany(
+            {_id: id},
+            { $set: {
+                    year: year} }
+        );
+
+        collection.updateMany(
+            {_id: id},
+            { $set: {
+                    areaLowerCase: areaLower} }
+        );
+
+    });
 });
 
 
 
-// TODO: json file for database query
+//json file for database query
 var queryInfo;
-// TODO: json file for containing result geodata
-var geoData = [{lat: 34.0707, lng: -118.2795},{lat: 34.0737, lng: -118.2795},{lat: 34.0757, lng: -118.2795}];
 
 
 /***************************
-    express framework part
+ express framework part
  ****************************/
 let express = require('express');
 let app = express();
@@ -48,10 +78,65 @@ app.get('/index.html', function (req, res) {
 
 app.get("/query",function (request, response) {
     queryInfo = request.query;
+    areaName = queryInfo.myinput;
+    //capitalized = areaName.charAt(0).toUpperCase() + areaName.slice(1).toLowerCase();
+    areaLower = areaName.toLowerCase();
 
-    var query = {'Area ID': 2};
+    if (queryInfo.gender === 'male'){
+        var sex = 'M';
+        var all = 'False';
+    } else if (queryInfo.gender === 'female'){
+        var sex = 'F';
+        var all = 'False';
+    } else if (queryInfo.gender === 'other'){
+        var sex = 'Other';
+        var all = 'False';
+    } else {
+        var all = 'True';
+    }
+    time = queryInfo.time;
+    time = time.replace(":", "");
+    lteTime = Number(time)+100;
+    gteTime = Number(time)-100;
+
+    if (areaLower.length === 0){
+        if (time.length === 0){
+            if (all === 'True'){
+                var query = {};
+            }
+            else {
+                var query = {"Victim Sex": sex};
+            }
+        }
+        else{
+            if (all === 'True') {
+                var query = {"Time Occurred": { $lte: lteTime, $gte: gteTime } };
+            }
+            else{
+                var query = {"Time Occurred": { $lte: lteTime, $gte: gteTime } , "Victim Sex": sex };
+            }
+        }
+    }else{
+        if (time.length === 0){
+            if (all === 'True'){
+                var query = {"areaLowerCase": areaLower};
+            }
+            else{
+                var query = {"areaLowerCase": areaLower, "Victim Sex": sex};
+            }
+        }
+        else{
+            if (all === 'True'){
+                var query = {"areaLowerCase": areaLower, "Time Occurred": { $lte: lteTime, $gte: gteTime } };
+            }
+            else{
+                var query = {"areaLowerCase": areaLower.toLowerCase(), "Time Occurred": { $lte: lteTime, $gte: gteTime } , "Victim Sex": sex };
+            }
+        }
+    }
+
     var results = [];
-    collection.find({}).limit(300000).project( {Location:1, _id: 0} ).toArray(function(err, res) {
+    collection.find(query).limit(300000).project( {Location:1, _id: 0} ).toArray(function(err, res) {
         // res.json(res)
         for (let i = 0; i < res.length; i++){
             var tmp = res[i].Location.split(", ");
@@ -64,20 +149,28 @@ app.get("/query",function (request, response) {
         }
         response.send(results)
     });
+
+
 });
 
 app.get("/requestGraph",function (request, response) {
     queryInfo = request.query;
 
-    var query = {'Area ID': 2};
-
     collection.aggregate([
         {$unwind: "$Area Name"},
         {$sortByCount: "$Area Name"}
     ]).toArray(function (err, results) {
-        console.log(results)
+        console.log(results);
         response.send(results);
     });
 });
 
-
+app.get("/requestGraph2",function (request, response) {
+    collection.aggregate([
+        {$unwind: "$year"},
+        {$sortByCount: "$year"}
+    ]).toArray(function (err, results) {
+        console.log(results);
+        response.send(results);
+    });
+});
