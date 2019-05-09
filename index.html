@@ -27,22 +27,33 @@
             <table>
                 <tr>
                     <th>
-                        Adding filter:
                     </th>
                     <th>
                         <label>Area Name</label>
-                        <input type="text" name="myinput">
                     </th>
                     <th>
                         <label>Victim Sex</label>
-                        <input type="radio" name="gender" value="male" checked> Male<br>
-                        <input type="radio" name="gender" value="female"> Female<br>
-                        <input type="radio" name="gender" value="other"> Other
                     </th>
                     <th>
                         <label>Time Occurred</label>
-                        <input type="time" name="time" min="00:00" max="23:59" required>
                     </th>
+                </tr>
+                <tr>
+                    <th>
+                        Adding filter:
+                    </th>
+                    <td>
+                        <input type="text" name="myinput">
+                    </td>
+                    <td>
+                        <input type="radio" name="gender" value="all" checked> All<br>
+                        <input type="radio" name="gender" value="male" checked> Male<br>
+                        <input type="radio" name="gender" value="female"> Female<br>
+                        <input type="radio" name="gender" value="other"> Other
+                    </td>
+                    <td>
+                        <input type="time" name="time" min="00:00" max="23:59">
+                    </td>
                     <td>
                         <input type="submit" value="Update">
                     </td>
@@ -50,20 +61,21 @@
             </table>
         </form>
 
-        <div id="chart_div"></div>
+        <h2>Crime Ranking</h2>
+        <h3>Number of Crimes vs Areas</h3>
+        <div id="top_x_div" style="width: 900px; height: 500px;"></div>
+        <h2>Crime Number Changes</h2>
+        <div id="curve_chart" style="width: 900px; height: 500px"></div>
     </body>
 </html>
 <script>
     var map, heatmap, pointArray;
-    // Initialize and add the map
     function initMap() {
-        // 33.940098, -117.954124
         var initialLocation = {lat: 33.940098, lng: -117.954124};
         map = new google.maps.Map(
             document.getElementById('map'), {zoom: 10, center: initialLocation, mapTypeId: 'satellite'}
     );
         pointArray = new google.maps.MVCArray();
-        // var marker = new google.maps.Marker({position: initialLocation, map: map});
         heatmap = new google.maps.visualization.HeatmapLayer({
             data: pointArray,
             map: map
@@ -83,8 +95,7 @@
             data : queryForm,
             success: function(data)
             {
-                // updateHeatmap(data)
-                console.log(data)
+                updateHeatmap(data)
             },
             dataType: "json",
             contentType : "application/json"
@@ -104,42 +115,86 @@
                 pointArray.push(new google.maps.LatLng(curLat, curLng))
             }
         }
-        console.log(pointArray)
     }
 
+    google.charts.load('current', {'packages':['bar']});
+    google.charts.setOnLoadCallback(drawStuff);
 
-    // TODO:https://developers.google.com/chart/interactive/docs/quick_start
+    function drawStuff() {
+        var areaInfo = [
+            {"_id": "77th Street", "count": 134448.0},
+            {"_id": "Southwest", "count": 125420.0},
+            {"_id": "N Hollywood", "count": 105469.0},
+            {"_id": "Pacific", "count": 103227.0},
+            {"_id": "Southeast", "count": 102569.0},
+            {"_id": "Mission", "count": 96565.0
+            }, {"_id": "Northeast", "count": 92934.0
+            }, {"_id": "Van Nuys", "count": 92390.0
+            }, {"_id": "Newton", "count": 91884.0
+            }, {"_id": "Hollywood", "count": 90491.0
+            }, {"_id": "Topanga", "count": 90235.0
+            }, {"_id": "Devonshire", "count": 89537.0
+            }, {"_id": "Central", "count": 87727.0
+            }, {"_id": "Olympic", "count": 87612.0
+            }, {"_id": "Harbor", "count": 85226.0
+            }, {"_id": "West Valley", "count": 82805.0
+            }, {"_id": "Rampart", "count": 82365.0
+            }, {"_id": "West LA", "count": 81866.0
+            }, {"_id": "Wilshire", "count": 80350.0
+            }, {"_id": "Foothill", "count": 73882.0
+            }, {"_id": "Hollenbeck", "count": 71748.0}
+        ];
+        var convertedInfo = [];
+        convertedInfo.push(['Area Name', 'Crimes']);
+        for (let i = 0; i < areaInfo.length; i ++){
+            convertedInfo.push([areaInfo[i]._id, areaInfo[i].count]);
+        }
 
-    // Load the Visualization API and the corechart package.
+        var data = new google.visualization.arrayToDataTable(convertedInfo);
+
+        var options = {
+            width: 900,
+            legend: { position: 'none' },
+            bars: 'horizontal', // Required for Material Bar Charts.
+            axes: {
+                x: {
+                    0: { side: 'top', label: 'Number of Crimes'} // Top x-axis.
+                }
+            },
+            bar: { groupWidth: "90%" }
+        };
+        var chart = new google.charts.Bar(document.getElementById('top_x_div'));
+        chart.draw(data, options);
+    }
+
     google.charts.load('current', {'packages':['corechart']});
-
-    // Set a callback to run when the Google Visualization API is loaded.
     google.charts.setOnLoadCallback(drawChart);
-
-    // Callback that creates and populates a data table,
-    // instantiates the pie chart, passes in the data and
-    // draws it.
     function drawChart() {
 
-        // Create the data table.
         var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Topping');
-        data.addColumn('number', 'Slices');
+        data.addColumn('date', 'Date');
+        data.addColumn('number', 'Crime Numbers');
+
         data.addRows([
-            ['Mushrooms', 3],
-            ['Onions', 1],
-            ['Olives', 1],
-            ['Zucchini', 1],
-            ['Pepperoni', 2]
+            [new Date(2010, 1, 1), 208787],
+            [new Date(2011, 1, 1), 200407],
+            [new Date(2012, 1, 1), 201124],
+            [new Date(2013, 1, 1), 192163],
+            [new Date(2014, 1, 1), 194956],
+            [new Date(2015, 1, 1), 214753],
+            [new Date(2016, 1, 1), 224546],
+            [new Date(2017, 1, 1), 229732],
+            [new Date(2018, 1, 1), 226136],
         ]);
 
-        // Set chart options
-        var options = {'title':'How Much Pizza I Ate Last Night',
-            'width':400,
-            'height':300};
+        var options = {
+            title: 'Crime Number Change in Years',
+            curveType: 'function',
+            legend: { position: 'bottom' },
+        };
 
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
         chart.draw(data, options);
     }
 </script>
